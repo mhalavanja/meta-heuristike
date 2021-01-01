@@ -27,12 +27,12 @@ matrix = getMatrix(n)
 cut = 0.5
 matrix01 = get01Matrix(matrix, cut)
 
-# sol, fit = hc.hillClimbing(n, 5, matrix01)
+# sol, fit = hc.hillClimbing(n, 3, matrix01)
 # print(helper.getDrawnSolution(sol))
 # print(fit)
 
-k = 10
-numOfIter = 20
+k = n // 2
+numOfIter = 500
 sol, fit = ga.geneticAlgorithm(n, k, numOfIter, matrix01)
 print(helper.getDrawnSolution(sol))
 print(fit)
