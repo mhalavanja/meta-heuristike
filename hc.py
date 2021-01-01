@@ -24,10 +24,10 @@ def getHCNeighbourhood(n: int, sol: tuple):
 def hillClimbing(n: int, repeat: int, matrix: np.array):
     retSol = None
     retFit = 0
-    for __ in range(repeat):
+    for __ in range(repeat): #koliko puta zelimo poceti ispocetka s random pocetnim rjesenjem
         bestSol = helper.getRandomStartingSolution(n)
         bestFit = helper.getFitnessOfSolution(bestSol, matrix)
-        for __ in range(n*n):
+        for __ in range(n*n): #koliko puta ponavljamo glavni dio hc
             neigh = getHCNeighbourhood(n, bestSol)
             for j in range(len(neigh)):
                 curOrder = neigh[j][0]

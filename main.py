@@ -22,14 +22,14 @@ def get01Matrix(matrix: np.array, cut: float):
 # Ovdje upisujemo parametre
 # n -> veličina matrice
 # cut -> koliko dobra mora biti šansa za uspijeh transplatacije da bi je obavili
-n = 30
+n = 50
 matrix = getMatrix(n)
 cut = 0.5
 matrix01 = get01Matrix(matrix, cut)
 
-sol, fit = hc.hillClimbing(n, 5, matrix01)
-print(helper.getDrawnSolution(sol))
-print(fit)
+# sol, fit = hc.hillClimbing(n, 5, matrix01)
+# print(helper.getDrawnSolution(sol))
+# print(fit)
 
 k = 10
 numOfIter = 20

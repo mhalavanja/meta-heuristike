@@ -42,12 +42,14 @@ def getFitnessOfSolution(sol: tuple, matrix: np.array):
         ntup = order[cur : cur + l]
         ntupWorks = True
         for i in range(l):
+            # print(order, enc, i, l, ntup)
             a = ntup[i]
             b = None
             if i == l - 1:
                 b = ntup[0]
             else:
                 b = ntup[i + 1]
+            # print(a, b, matrix[a][b])
             if matrix[a][b] == 0:
                 ntupWorks = False
                 break
@@ -90,4 +92,5 @@ def changeEnc(enc: np.array, i: int, j: int):
     elif a != 3 and b != 1:
         enc[i] = a + 1
         enc[j] = b - 1
+    # assert np.sum(enc) == n
     return enc
