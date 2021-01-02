@@ -3,8 +3,6 @@ import hc
 import ga
 import helper
 
-#Jako losi rezultati
-#TODO: implementirati GA sljedece
 # 1) Ne znam jel se isplati napraviti HC kod odabira početne generacije za GA
 # 2) Treba odlučiti koja vrsta GA je bolja ili kako cemo tocno
 # Stochastic universal sampling
@@ -25,10 +23,8 @@ def SUSSelection(generation: np.array, line: np.array, fitSum: int, n: int, k: i
     assert len(selected) == k
     return selected
 
-def topSelection(generation: np.array, fitnes: np.array, k: int):
-    # print(fitnes)
-    inds = np.array(fitnes).argsort()
-    # print(inds)
+def topSelection(generation: np.array, fitnes: np.array, n: int, k: int):
+    inds = np.array(fitnes).argsort()[::-1] 
     generation = np.array(generation, tuple)[inds]
     return generation[:k]
     
@@ -47,7 +43,7 @@ def mutateGeneration(n: int, generation: np.array):
         #     return(order, helper.changeEnc(enc, encToChange[0], encToChange[1]))
         if encToChange[0] != encToChange[1]:
             return(order, helper.changeEnc(enc, encToChange[0], encToChange[1]))
-    mutation = np.random.choice(2, n, p=[0.95, 0.05])
+    mutation = np.random.choice(2, n, p=[0.80, 0.20]) #mogucnost mutacije
     for i in range(n):
         if mutation[i] == 1:
             generation[i] = mutate(n, generation[i])
@@ -57,9 +53,7 @@ def mutateGeneration(n: int, generation: np.array):
 #    njihov apsolutni poredak u listi
 def crossingForGA(n: int, k: int, population: np.array):
     def crossing(n: int, solA: tuple, solB: tuple):
-        [pos1, pos2] = np.random.randint(0, n, 2) #ili ovo ili varijanta ova dva reda dolje
-        # [pos1] = np.random.randint(0, n/2, 1)
-        # pos2 = pos1 + int(n / 2)
+        [pos1, pos2] = np.random.randint(0, n, 2)
         if pos2 < pos1:
             tmp = pos1
             pos1 = pos2
@@ -106,27 +100,28 @@ def crossingForGA(n: int, k: int, population: np.array):
                 childBord[j] = orderA[i]
                 setB.add(orderA[i])
                 j += 1
-        assert None not in childAord
-        assert None not in childBord
-        # print("AAAAAAAAA", childAord, childBord)
         return ((childAord, encA), (childBord, encB))
 
     # [l, s] = np.random.randint(0, n, 2) # l -> duljina ntupa, s -> startni indeks
     mutation = np.random.choice(2, n, p=[0.95, 0.05]) #mogucnost mutacije
     newGeneration = []
-    # l = l % 3 + 1
     cur = 0
     while cur < n:
+        indices = np.random.randint(0, k, k)
         for i in range(k):
             a = population[i] #jos [0] ako se i fit prenosi s populacijom
-            t = (2 * i + n//3) % k
-            b = population[t]
+            # t = (2 * i + n//3) % k
+            b = population[indices[i]]
             # print(type(a[0]), type(a[0]))
-            while not np.any(a[0] - b[0]):
-                # print(a)
-                # print(b)
-                t += 1
-                b = population[t]
+            # count = 0
+            # while not np.any(a[0] - b[0]):
+            #     try:
+            #         assert count < 100
+            #     except AssertionError:
+            #         break
+            #     [t] = np.random.randint(0, k, 1)
+            #     b = population[t]
+            #     count += 1
             c, d = crossing(n, a, b)
             if cur == n:
                 assert None not in newGeneration
@@ -162,17 +157,17 @@ def geneticAlgorithm(n: int, k: int, numOfIter: int, matrix: np.array):
                 generation.append(sol) #mozda mozemo ovaj fit iskoristit i za kasnije
                 fitnes.append(fit)
             # selected = SUSSelection(generation, line, fitSum, n, k)
-            selected = topSelection(generation, fitnes, k)
+            selected = topSelection(generation, fitnes, n, k)
             generation = crossingForGA(n, k, selected)
             generation = mutateGeneration(n, generation)
         else:
             fitSum = 0
             line = []
             fitnes = []
+            newGeneration = []
             for i in range(n):
                 assert len(generation) == n
                 sol = generation[i]
-                # print(sol)
                 fit = helper.getFitnessOfSolution(sol, matrix)
                 if fit > bestFit:
                     bestFit = fit
@@ -184,7 +179,7 @@ def geneticAlgorithm(n: int, k: int, numOfIter: int, matrix: np.array):
                 fitnes.append(fit)
             generation = newGeneration
             # selected = SUSSelection(generation, line, fitSum, n, k)
-            selected = topSelection(generation, fitnes, k)
+            selected = topSelection(generation, fitnes, n, k)
             generation = crossingForGA(n, k, selected)
             generation = mutateGeneration(n, generation)
     return (bestSol, bestFit)

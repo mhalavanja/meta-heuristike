@@ -31,7 +31,8 @@ matrix01 = get01Matrix(matrix, cut)
 # print(helper.getDrawnSolution(sol))
 # print(fit)
 
-k = n // 2
+#TODO: ne znam koliko je najbolje da je k
+k = 10 #k-> veličina selektirane populacije za krizanje
 numOfIter = 500
 sol, fit = ga.geneticAlgorithm(n, k, numOfIter, matrix01)
 print(helper.getDrawnSolution(sol))
