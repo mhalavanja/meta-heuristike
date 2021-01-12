@@ -31,6 +31,8 @@ def topSelection(generation: np.array, fitnes: np.array, n: int, k: int):
 def mutateGeneration(n: int, generation: np.array):
     def mutate(n: int, sol: tuple):
         order, enc = sol
+        newOrder = order.copy()
+        newEnc = enc.copy()
         # swapPairs = np.random.randint(0, n, 2)
         # [changeWhat] = np.random.randint(0, 2, 1)
         encToChange = np.random.randint(0, len(enc), 2)
@@ -38,11 +40,11 @@ def mutateGeneration(n: int, generation: np.array):
             encToChange = np.random.randint(0, len(enc), 2)
         # if changeWhat == 0 or encToChange[0] == encToChange[1]:
         
-        #     return(helper.swap(order, swapPairs[0], swapPairs[1]), enc)
+        #     return(helper.swap(newOrder, swapPairs[0], swapPairs[1]), enc)
         # else:
-        #     return(order, helper.changeEnc(enc, encToChange[0], encToChange[1]))
+        #     return(order, helper.changeEnc(newEnc, encToChange[0], encToChange[1]))
         if encToChange[0] != encToChange[1]:
-            return(order, helper.changeEnc(enc, encToChange[0], encToChange[1]))
+            return(order, helper.changeEnc(newEnc, encToChange[0], encToChange[1]))
     mutation = np.random.choice(2, n, p=[0.80, 0.20]) #mogucnost mutacije
     for i in range(n):
         if mutation[i] == 1:
@@ -58,8 +60,14 @@ def crossingForGA(n: int, k: int, population: np.array):
             tmp = pos1
             pos1 = pos2
             pos2 = tmp
-        [orderA, encA] = solA
-        [orderB, encB] = solB
+
+        [realOrderA, realEncA] = solA
+        [realOrderB, realEncB] = solB
+        orderA = realOrderA.copy()
+        orderB = realOrderB.copy()
+        encA = realEncA.copy()
+        encB = realEncB.copy()
+
         childAord = np.full(n, np.nan, int)
         childBord = np.full(n, np.nan, int)
         setA = set()
@@ -103,7 +111,6 @@ def crossingForGA(n: int, k: int, population: np.array):
         return ((childAord, encA), (childBord, encB))
 
     # [l, s] = np.random.randint(0, n, 2) # l -> duljina ntupa, s -> startni indeks
-    mutation = np.random.choice(2, n, p=[0.95, 0.05]) #mogucnost mutacije
     newGeneration = []
     cur = 0
     while cur < n:
@@ -112,7 +119,6 @@ def crossingForGA(n: int, k: int, population: np.array):
             a = population[i] #jos [0] ako se i fit prenosi s populacijom
             # t = (2 * i + n//3) % k
             b = population[indices[i]]
-            # print(type(a[0]), type(a[0]))
             # count = 0
             # while not np.any(a[0] - b[0]):
             #     try:
@@ -124,62 +130,46 @@ def crossingForGA(n: int, k: int, population: np.array):
             #     count += 1
             c, d = crossing(n, a, b)
             if cur == n:
-                assert None not in newGeneration
                 return newGeneration
             cur += 1
             newGeneration.append(c)
+            if cur == n:
+                return newGeneration
             cur += 1
             newGeneration.append(d)
-            if cur == n:
-                assert None not in newGeneration
-                return newGeneration
 
 # 1) k je veličina populacije za križanje
 def geneticAlgorithm(n: int, k: int, numOfIter: int, matrix: np.array):
-    generation = []
+    generation = [helper.getRandomStartingSolution(n) for _ in range(n)]
     newGeneration = []
     fitSum = 0
     line = []
     bestFit = 0
     bestSol = None
     fitnes = []
+
     for __ in range(numOfIter):    
-        if len(generation) == 0:
-            for __ in range(n):
-                sol = helper.getRandomStartingSolution(n)
-                fit = helper.getFitnessOfSolution(sol, matrix)
-                if fit > bestFit:
-                    bestFit = fit
-                    bestSol = sol
-                newFitSum = fitSum + fit
-                line.append((fitSum, newFitSum))
-                fitSum = newFitSum
-                generation.append(sol) #mozda mozemo ovaj fit iskoristit i za kasnije
-                fitnes.append(fit)
-            # selected = SUSSelection(generation, line, fitSum, n, k)
-            selected = topSelection(generation, fitnes, n, k)
-            generation = crossingForGA(n, k, selected)
-            generation = mutateGeneration(n, generation)
-        else:
-            fitSum = 0
-            line = []
-            fitnes = []
-            newGeneration = []
-            for i in range(n):
-                assert len(generation) == n
-                sol = generation[i]
-                fit = helper.getFitnessOfSolution(sol, matrix)
-                if fit > bestFit:
-                    bestFit = fit
-                    bestSol = sol
-                newFitSum = fitSum + fit
-                line.append((fitSum, newFitSum))
-                fitSum = newFitSum
-                newGeneration.append(sol)
-                fitnes.append(fit)
-            generation = newGeneration
-            # selected = SUSSelection(generation, line, fitSum, n, k)
-            selected = topSelection(generation, fitnes, n, k)
-            generation = crossingForGA(n, k, selected)
-            generation = mutateGeneration(n, generation)
+        assert len(generation) == n
+        for i in range(n):
+            sol = generation[i]
+            fit = helper.getFitnessOfSolution(sol, matrix)
+            if fit > bestFit:
+                bestFit = fit
+                bestSol = sol
+            # newFitSum = fitSum + fit
+            # line.append((fitSum, newFitSum))
+            # fitSum = newFitSum
+            newGeneration.append(sol)
+            fitnes.append(fit)
+        generation = newGeneration
+        # selected = SUSSelection(generation, line, fitSum, n, k)
+        selected = topSelection(generation, fitnes, n, k)
+        generation = crossingForGA(n, k, selected)
+    for i in range(n):
+        assert len(generation) == n
+        sol = generation[i]
+        fit = helper.getFitnessOfSolution(sol, matrix)
+        if fit > bestFit:
+            bestFit = fit
+            bestSol = sol
     return (bestSol, bestFit)

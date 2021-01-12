@@ -10,6 +10,16 @@ def getMatrix(n: int):
     matrix = np.random.rand(n, n)
     return matrix
 
+def loadMatrix(fileName: str):
+    matrix = []
+    with open(fileName) as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line[:-2]
+            arr = [int(n) for n in line.split(",")]
+            matrix.append(arr)
+    return matrix
+
 def get01Matrix(matrix: np.array, cut: float):
     def cutFunction(x):
         if x < cut:
@@ -22,18 +32,22 @@ def get01Matrix(matrix: np.array, cut: float):
 # Ovdje upisujemo parametre
 # n -> veličina matrice
 # cut -> koliko dobra mora biti šansa za uspijeh transplatacije da bi je obavili
-n = 50
+n = 99
+matrix = loadMatrix("Matrica_100")
 matrix = getMatrix(n)
-cut = 0.5
+cut = 0.60
 matrix01 = get01Matrix(matrix, cut)
 
-# sol, fit = hc.hillClimbing(n, 3, matrix01)
-# print(helper.getDrawnSolution(sol))
-# print(fit)
+# rsol, rfit = hc.hillClimbing(n, 1, matrix01)
 
 #TODO: ne znam koliko je najbolje da je k
-k = 10 #k-> veličina selektirane populacije za krizanje
+k = 99 #k-> veličina selektirane populacije za krizanje
 numOfIter = 500
-sol, fit = ga.geneticAlgorithm(n, k, numOfIter, matrix01)
-print(helper.getDrawnSolution(sol))
-print(fit)
+rsol, rfit = ga.geneticAlgorithm(n, k, numOfIter, matrix01)
+# print("------------------------------------------------")
+# print(rsol)
+print(helper.getDrawnSolution(rsol))
+print(rfit)
+# print(helper.getFitnessOfSolution(rsol, matrix01))
+# print(matrix01)
+# sol, fit = helper.getFitnessOfDrawnSolution(helper.getDrawnSolution(sol), matrix01)

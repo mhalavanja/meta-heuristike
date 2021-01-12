@@ -42,26 +42,27 @@ def getFitnessOfSolution(sol: tuple, matrix: np.array):
         ntup = order[cur : cur + l]
         ntupWorks = True
         for i in range(l):
-            # print(order, enc, i, l, ntup)
             a = ntup[i]
             b = None
             if i == l - 1:
                 b = ntup[0]
             else:
                 b = ntup[i + 1]
-            # print(a, b, matrix[a][b])
             if matrix[a][b] == 0:
                 ntupWorks = False
                 break
         if ntupWorks:
             fit += l
         cur += l
+    # print(fit)
     return fit
 
 # 1) Ovo nam vjerojatno ne treba, samo sam imao dvije implementacije na umu
 def getFitnessOfDrawnSolution(sol: np.array, matrix: np.array):
     fit = 0
-    for ntup in sol:
+    i = 0
+    while i < len(sol):
+        ntup = sol[i]
         l = len(ntup)
         ntupWorks = True
         for i in range(l):
@@ -73,9 +74,12 @@ def getFitnessOfDrawnSolution(sol: np.array, matrix: np.array):
                 b = ntup[i + 1]
             if matrix[a][b] == 0:
                 ntupWorks = False
+                sol.remove(ntup)
+                break
         if ntupWorks:
             fit += l
-    return fit
+            i += 1
+    return (sol, fit)
 
 def swap(lista: np.array, i: int, j: int):
         temp = lista[i]
@@ -83,6 +87,7 @@ def swap(lista: np.array, i: int, j: int):
         lista[j] = temp
         return lista
 
+# 1) Jedan enc se smanji ako je veci od 1, a jedan se poveca ako je manji od 3
 def changeEnc(enc: np.array, i: int, j: int):
     a = enc[i]
     b = enc[j]
