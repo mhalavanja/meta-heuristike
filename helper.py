@@ -57,29 +57,35 @@ def getFitnessOfSolution(sol: tuple, matrix: np.array):
     # print(fit)
     return fit
 
-# 1) Ovo nam vjerojatno ne treba, samo sam imao dvije implementacije na umu
-def getFitnessOfDrawnSolution(sol: np.array, matrix: np.array):
-    fit = 0
-    i = 0
-    while i < len(sol):
-        ntup = sol[i]
-        l = len(ntup)
+# 1) Vraća nacrtano rješenje koje sadrži samo ntuplove čije će se operacije dogoditi  
+def getFinalDrawnSolution(sol: np.array, matrix: np.array):
+    order, enc = sol
+    order = order.tolist()
+    cur = 0
+    j = 0
+    while j < len(enc):
+        l = enc[j] #prolazimo po enc listi
+        ntup = order[cur : cur + l]
+        i = 0
         ntupWorks = True
-        for i in range(l):
+        while i < l: #prolazimo po dijelu order liste duljine l
             a = ntup[i]
             b = None
             if i == l - 1:
                 b = ntup[0]
             else:
                 b = ntup[i + 1]
-            if matrix[a][b] == 0:
+            if matrix[a][b] == 0: #ako trenutni ciklus (lanac) nije dobar, brišemo ga
+                del enc[j]  #brišemo iz enc liste element koji ne cini dobar ciklus (lanac)
+                for k in range(l): #brišemo iz order liste id-eve koji ne cien dobar ciklus (lanac)
+                    del order[cur]
                 ntupWorks = False
-                sol.remove(ntup)
                 break
-        if ntupWorks:
-            fit += l
             i += 1
-    return (sol, fit)
+        if ntupWorks:
+            cur += l
+            j += 1
+    return getDrawnSolution((order, enc))
 
 def swap(lista: np.array, i: int, j: int):
         temp = lista[i]
