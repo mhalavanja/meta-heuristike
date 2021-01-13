@@ -129,14 +129,15 @@ def crossingForGA(n: int, k: int, population: np.array):
             #     b = population[t]
             #     count += 1
             c, d = crossing(n, a, b)
-            if cur == n:
-                return newGeneration
             cur += 1
             newGeneration.append(c)
             if cur == n:
                 return newGeneration
             cur += 1
             newGeneration.append(d)
+            if cur == n:
+                return newGeneration
+    return newGeneration
 
 # 1) k je veličina populacije za križanje
 def geneticAlgorithm(n: int, k: int, numOfIter: int, matrix: np.array):

@@ -32,8 +32,8 @@ def get01Matrix(matrix: np.array, cut: float):
 # Ovdje upisujemo parametre
 # n -> veličina matrice
 # cut -> koliko dobra mora biti šansa za uspijeh transplatacije da bi je obavili
-n = 10
-# matrix = loadMatrix("Matrica_500")
+n = 50
+# matrix = loadMatrix("Matrica_100")
 matrix = getMatrix(n)
 cut = 0.60
 matrix01 = get01Matrix(matrix, cut)
@@ -41,8 +41,8 @@ matrix01 = get01Matrix(matrix, cut)
 # rsol, rfit = hc.hillClimbing(n, 1, matrix01)
 
 #TODO: ne znam koliko je najbolje da je k
-k = 10 #k-> veličina selektirane populacije za krizanje
-numOfIter = 50
+k = 50 #k-> veličina selektirane populacije za krizanje
+numOfIter = 500
 rsol, rfit = ga.geneticAlgorithm(n, k, numOfIter, matrix01)
 # print("------------------------------------------------")
 # print(rsol)

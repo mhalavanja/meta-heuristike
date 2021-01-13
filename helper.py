@@ -11,10 +11,8 @@ def getDrawnSolution(sol: tuple):
         cur += ntup
     return ret
 
-# 1) Mislim da je ovo najfleksibilniji prikaz rješenja, zauzima duplo memorije, ali memorija nije probelm
-def getRandomStartingSolution(n: int):
-    l = []
-    enc = [] #enclosure
+def getEnclousure(n: int):
+    enc = []
     sum = 0
     while sum < n:
         [t] = np.random.randint(1, 4, 1)
@@ -24,9 +22,15 @@ def getRandomStartingSolution(n: int):
             if t <= 0:
                 break
         enc.append(t)
+    return enc
+
+# 1) Mislim da je ovo najfleksibilniji prikaz rješenja, zauzima duplo memorije, ali memorija nije probelm
+def getRandomStartingSolution(n: int):
+    order = []
+    enc = getEnclousure(n)
     for i in range(n):
-        l.append(i)
-    return (np.random.permutation(l), enc)
+        order.append(i)
+    return (np.random.permutation(order), enc)
 
 # 1) Mozda da pocnemo s jednostavnim greedy algoritmom (GRASP)
 # 2) Mislim da je pretesko ovo napraviti, a da ima koristi
