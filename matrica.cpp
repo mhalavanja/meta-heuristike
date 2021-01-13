@@ -248,9 +248,9 @@ int main(int argc, char **argv) { //PRVI ARGUMENT JE UVIJEK IME FUNKCIJE PA JE a
     int k,l;
 
     std::ofstream output(Ime); //ZAPISUJEMO MATRICU U DATOTEKU  
-    for (k=1; k<velicina; k++)
+    for (k=0; k<velicina; k++)
     {
-        for (l=1; l<velicina; l++)
+        for (l=0; l<velicina; l++)
         {
             output << Matrix[k][l] << ",";
         }
