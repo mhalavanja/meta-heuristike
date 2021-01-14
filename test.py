@@ -21,17 +21,18 @@ def getTestMatrix(n: int, fit: int):
         cur += l
     return (matrix, (idList, enc))
 
-n = 200
-k = 100 #k-> veličina selektirane populacije za krizanje
+n = 10
+k = n//2 #k-> veličina selektirane populacije za krizanje
+optFit = n
 numOfIter = 1000
-optFit = 200
 
-matrix01, optimalSol = getTestMatrix(n, optFit)
-sol, fit = ga.geneticAlgorithm(n, k, numOfIter, matrix01)
 
 # print(matrix01)
-print("Dobiveni fit: ", fit)
-print("Dobiveno rješenje: ", helper.getFinalDrawnSolution(sol, matrix01))
-print()
+matrix01, optimalSol = getTestMatrix(n, optFit)
 print("Optimalni fit: ", optFit)
 print("Optimalno rješenje: ", helper.getFinalDrawnSolution(optimalSol, matrix01))
+print()
+
+sol, fit = ga.geneticAlgorithm(n, k, numOfIter, matrix01)
+print("Dobiveni fit: ", fit)
+print("Dobiveno rješenje: ", helper.getFinalDrawnSolution(sol, matrix01))

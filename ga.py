@@ -111,38 +111,29 @@ def crossingForGA(n: int, k: int, selected: np.array, rng):
         return ((childAord, encA), (childBord, encB))
 
     # [l, s] = np.random.randint(0, n, 2) # l -> duljina ntupa, s -> startni indeks
-    newGeneration = []
+    newGeneration = np.empty(n, dtype=object)
     cur = 0
     while cur < n:
         indices = rng.choice(k, n//2 + 1, replace=True)
         for i in range(k):
-            a = selected[indices[i]] #jos [0] ako se i fit prenosi s populacijom
-            # t = (2 * i + n//3) % k
-            b = selected[indices[i + 1]]
-            # count = 0
-            # while not np.any(a[0] - b[0]):
-            #     try:
-            #         assert count < 100
-            #     except AssertionError:
-            #         break
-            #     [t] = np.random.randint(0, k, 1)
-            #     b = population[t]
-            #     count += 1
-            c, d = crossing(n, a, b)
-            cur += 1
-            newGeneration.append(c)
+            solA = selected[indices[i]]
+            solB = selected[indices[i + 1]]
+            solC, solD = crossing(n, solA, solB)
+            newGeneration[cur] = solC
             if cur == n:
                 return newGeneration
             cur += 1
-            newGeneration.append(d)
+            newGeneration[cur] = solD
             if cur == n:
                 return newGeneration
+            cur += 1
     return newGeneration
 
 # 1) k je veličina populacije za križanje
 def geneticAlgorithm(n: int, k: int, numOfIter: int, matrix: np.array):
     generation = np.array([helper.getRandomStartingSolution(n) for _ in range(n)], dtype=object)
     line = np.empty(n, dtype=object)
+    selected = np.empty(k, dtype=object)
     fitnes = np.empty(n, dtype=int)
     rng = np.random.default_rng()
     bestFit = 0
