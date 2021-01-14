@@ -7,20 +7,22 @@ import helper
 # 2) Treba odlučiti koja vrsta GA je bolja ili kako cemo tocno
 # Stochastic universal sampling
 def SUSSelection(generation: np.array, line: np.array, fitSum: int, n: int, k: int):
-    selected = []
+    selected = np.empty(k, dtype=object)
     p = fitSum/float(k)
     [r] = np.random.uniform(0, p, 1)
     j = 0
     curPointer = r
+    cur = 0
     while curPointer < line[0][0]:
             j += 1
             curPointer = r + float(j * p)
     for i in range(n):    
         while curPointer > line[i][0] and curPointer < line[i][1]:
-            selected.append(generation[i])
+            selected[cur] = generation[i]
+            cur += 1
             j += 1
             curPointer = r + float(j * p)
-    assert len(selected) == k
+    assert None not in selected
     return selected
 
 def topSelection(generation: np.array, fitnes: np.array, n: int, k: int):
@@ -28,32 +30,30 @@ def topSelection(generation: np.array, fitnes: np.array, n: int, k: int):
     generation = np.array(generation, tuple)[inds]
     return generation[:k]
     
-def mutateGeneration(n: int, generation: np.array):
-    def mutate(n: int, sol: tuple):
+def mutateGeneration(n: int, generation: np.array, rng):
+    def mutate(n: int, sol: tuple, rng):
         order, enc = sol
         newOrder = order.copy()
         newEnc = enc.copy()
         # swapPairs = np.random.randint(0, n, 2)
         # [changeWhat] = np.random.randint(0, 2, 1)
-        encToChange = np.random.randint(0, len(enc), 2)
-        while encToChange[0] == encToChange[1]:
-            encToChange = np.random.randint(0, len(enc), 2)
+        encToChange = rng.choice(len(enc), 2, replace=False)
         # if changeWhat == 0 or encToChange[0] == encToChange[1]:
         
         #     return(helper.swap(newOrder, swapPairs[0], swapPairs[1]), enc)
         # else:
         #     return(order, helper.changeEnc(newEnc, encToChange[0], encToChange[1]))
-        if encToChange[0] != encToChange[1]:
-            return(order, helper.changeEnc(newEnc, encToChange[0], encToChange[1]))
-    mutation = np.random.choice(2, n, p=[0.80, 0.20]) #mogucnost mutacije
+        return(order, helper.changeEnc(newEnc, encToChange[0], encToChange[1]))
+
+    mutation = np.random.choice(2, n, p=[0.950, 0.050]) #mogucnost mutacije
     for i in range(n):
         if mutation[i] == 1:
-            generation[i] = mutate(n, generation[i])
+            generation[i] = mutate(n, generation[i], rng)
     return generation
 
 # 1) Koristimo križanje poretka zato što je bitan redosljed u kojem su brojevi, a ne 
 #    njihov apsolutni poredak u listi
-def crossingForGA(n: int, k: int, population: np.array):
+def crossingForGA(n: int, k: int, selected: np.array, rng):
     def crossing(n: int, solA: tuple, solB: tuple):
         [pos1, pos2] = np.random.randint(0, n, 2)
         if pos2 < pos1:
@@ -114,11 +114,11 @@ def crossingForGA(n: int, k: int, population: np.array):
     newGeneration = []
     cur = 0
     while cur < n:
-        indices = np.random.randint(0, k, k)
+        indices = rng.choice(k, n//2 + 1, replace=True)
         for i in range(k):
-            a = population[i] #jos [0] ako se i fit prenosi s populacijom
+            a = selected[indices[i]] #jos [0] ako se i fit prenosi s populacijom
             # t = (2 * i + n//3) % k
-            b = population[indices[i]]
+            b = selected[indices[i + 1]]
             # count = 0
             # while not np.any(a[0] - b[0]):
             #     try:
@@ -141,31 +141,33 @@ def crossingForGA(n: int, k: int, population: np.array):
 
 # 1) k je veličina populacije za križanje
 def geneticAlgorithm(n: int, k: int, numOfIter: int, matrix: np.array):
-    generation = [helper.getRandomStartingSolution(n) for _ in range(n)]
-    newGeneration = []
-    fitSum = 0
-    line = []
+    generation = np.array([helper.getRandomStartingSolution(n) for _ in range(n)], dtype=object)
+    line = np.empty(n, dtype=object)
+    fitnes = np.empty(n, dtype=int)
+    rng = np.random.default_rng()
     bestFit = 0
     bestSol = None
-    fitnes = []
 
     for __ in range(numOfIter):    
         assert len(generation) == n
+        fitSum = 0
+
         for i in range(n):
             sol = generation[i]
             fit = helper.getFitnessOfSolution(sol, matrix)
             if fit > bestFit:
                 bestFit = fit
                 bestSol = sol
-            # newFitSum = fitSum + fit
-            # line.append((fitSum, newFitSum))
-            # fitSum = newFitSum
-            newGeneration.append(sol)
-            fitnes.append(fit)
-        generation = newGeneration
+            newFitSum = fitSum + fit
+            line[i] = (fitSum, newFitSum)
+            fitSum = newFitSum
+            generation[i] = sol
+            fitnes[i] = fit
+
         # selected = SUSSelection(generation, line, fitSum, n, k)
         selected = topSelection(generation, fitnes, n, k)
-        generation = crossingForGA(n, k, selected)
+        generation = crossingForGA(n, k, selected, rng)
+        generation = mutateGeneration(n, generation, rng)        
     for i in range(n):
         assert len(generation) == n
         sol = generation[i]

@@ -21,10 +21,10 @@ def getTestMatrix(n: int, fit: int):
         cur += l
     return (matrix, (idList, enc))
 
-n = 20
-k = 20 #k-> veličina selektirane populacije za krizanje
-numOfIter = 500
-optFit = 20
+n = 200
+k = 100 #k-> veličina selektirane populacije za krizanje
+numOfIter = 1000
+optFit = 200
 
 matrix01, optimalSol = getTestMatrix(n, optFit)
 sol, fit = ga.geneticAlgorithm(n, k, numOfIter, matrix01)
