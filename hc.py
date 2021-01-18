@@ -29,7 +29,7 @@ def getHCNeighbourhood(n: int, sol: tuple):
     return neigh
 
 # 1) repeat parametar je koliko puta da se ponovi algoritam pa onda uzmemo najbolje rješenje
-def hillClimbing(n: int, repeat: int, matrix: np.array):
+def hillClimbing(n: int, repeat: int, matrix):
     retSol = None
     retFit = 0
 

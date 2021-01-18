@@ -26,19 +26,12 @@ def getEnclousure(n: int):
 
 # 1) Mislim da je ovo najfleksibilniji prikaz rješenja, zauzima duplo memorije, ali memorija nije probelm
 def getRandomStartingSolution(n: int):
-    order = []
+    order = np.random.permutation(n)
     enc = getEnclousure(n)
-    for i in range(n):
-        order.append(i)
-    return (np.random.permutation(order), enc)
-
-# 1) Mozda da pocnemo s jednostavnim greedy algoritmom (GRASP)
-# 2) Mislim da je pretesko ovo napraviti, a da ima koristi
-def getGreedyStartingSolution(n: int, matrix: np.array):
-    pass
+    return (order, enc)
 
 # 1) Za svaki ciklus gleda je li svi u ciklusu imaju transplataciju i onda je fit += len(ciklusa)
-def getFitnessOfSolution(sol: tuple, matrix: np.array):
+def getFitnessOfSolution(sol: tuple, matrix):
     order, enc = sol
     fit = 0
     cur = 0
@@ -62,7 +55,7 @@ def getFitnessOfSolution(sol: tuple, matrix: np.array):
     return fit
 
 # 1) Vraća nacrtano rješenje koje sadrži samo ntuplove čije će se operacije dogoditi  
-def getFinalDrawnSolution(sol: np.array, matrix: np.array):
+def getFinalDrawnSolution(sol: tuple, matrix):
     order, enc = sol
     order = order.tolist()
     cur = 0
@@ -91,14 +84,14 @@ def getFinalDrawnSolution(sol: np.array, matrix: np.array):
             j += 1
     return getDrawnSolution((order, enc))
 
-def swap(lista: np.array, i: int, j: int):
+def swap(lista, i: int, j: int):
         temp = lista[i]
         lista[i] = lista[j]
         lista[j] = temp
         return lista
 
 # 1) Jedan enc se smanji ako je veci od 1, a jedan se poveca ako je manji od 3
-def changeEnc(enc: np.array, i: int, j: int):
+def changeEnc(enc, i: int, j: int):
     a = enc[i]
     b = enc[j]
     if a != 1 and b != 3:
@@ -107,5 +100,4 @@ def changeEnc(enc: np.array, i: int, j: int):
     elif a != 3 and b != 1:
         enc[i] = a + 1
         enc[j] = b - 1
-    # assert np.sum(enc) == n
     return enc

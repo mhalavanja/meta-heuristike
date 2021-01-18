@@ -22,7 +22,7 @@ def getTestMatrix(n: int, fit: int):
     return (matrix, (idList, enc))
 
 n = 10
-k = n//2 #k-> veličina selektirane populacije za krizanje
+k = 10 #n//2 #k-> veličina selektirane populacije za krizanje
 optFit = n
 numOfIter = 1000
 

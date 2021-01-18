@@ -20,7 +20,7 @@ def loadMatrix(fileName: str):
             matrix.append(arr)
     return matrix
 
-def get01Matrix(matrix: np.array, cut: float):
+def get01Matrix(matrix: np.ndarray, cut: float):
     def cutFunction(x):
         if x < cut:
             return 0
