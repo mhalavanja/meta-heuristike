@@ -6,8 +6,10 @@ import helper
 # 1) Ne znam jel se isplati napraviti HC kod odabira početne generacije za GA
 # 2) Treba odlučiti koja vrsta GA je bolja ili kako cemo tocno
 # Stochastic universal sampling
-def SUSSelection(generation, line, fitSum: int, n: int, k: int):
+def SUSSelection(generation, line, fitSum: int, popSize: int, k: int):
     selected = np.empty(k, dtype=object)
+    if fitSum == 0:
+        return generation[:k].copy()
     p = fitSum/float(k)
     [r] = np.random.uniform(0, p, 1)
     j = 0
@@ -16,7 +18,7 @@ def SUSSelection(generation, line, fitSum: int, n: int, k: int):
     while curPointer < line[0][0]:
             j += 1
             curPointer = r + float(j * p)
-    for i in range(n):    
+    for i in range(popSize):    
         while curPointer > line[i][0] and curPointer < line[i][1]:
             selected[cur] = generation[i]
             cur += 1
@@ -25,43 +27,43 @@ def SUSSelection(generation, line, fitSum: int, n: int, k: int):
     assert None not in selected
     return selected
 
-def topSelection(generation, fitnes, n: int, k: int):
+def topSelection(generation, fitnes, k: int):
     inds = np.array(fitnes).argsort()[::-1] 
     generation = np.array(generation, tuple)[inds]
     return generation[:k]
 
 # 1) TODO: Mogli bi imati dvije mutacije, jedna mtuacija za order, druga za enc 
-def mutateGeneration(n: int, generation, rng):
+def mutateGeneration(popSize: int, n: int, generation, rng):
     def mutateEnc(sol: tuple, rng):
         order, enc = sol
-        newOrder = order.copy()
-        newEnc = enc.copy()
+        # newOrder = order.copy()
+        # newEnc = enc.copy()
         encToChange = rng.choice(len(enc), 2, replace=False)
-        return(newOrder, helper.changeEnc(newEnc, encToChange[0], encToChange[1]))
+        return(order, helper.changeEnc(enc, encToChange[0], encToChange[1]))
 
     def mutateOrder(n: int, sol: tuple, rng):
         order, enc = sol
-        newOrder = order.copy()
-        newEnc = enc.copy()
+        # newOrder = order.copy()
+        # newEnc = enc.copy()
         orderToChange = rng.choice(n, 2, replace=False)
-        return(helper.swap(newOrder, orderToChange[0], orderToChange[1]), newEnc)
+        return(helper.swap(order, orderToChange[0], orderToChange[1]), enc)
 
-    mutationEnc = np.random.choice(2, n, p=[0.90, 0.10]) #mogucnost mutacije enclousera
-    mutationOrder = np.random.choice(2, n, p=[0.99, 0.01]) #mogucnost mutacije ordera
+    mutationEnc = np.random.choice(2, popSize, p=[0.95, 0.05]) #mogucnost mutacije enclousera
+    mutationOrder = np.random.choice(2, popSize, p=[0.99, 0.01]) #mogucnost mutacije ordera
     
-    for i in range(n):
+    for i in range(popSize):
         if mutationEnc[i] == 1:
             generation[i] = mutateEnc(generation[i], rng)
         if mutationOrder[i] == 1:
-            generation[i] = mutateEnc(generation[i], rng)
+            generation[i] = mutateOrder(n, generation[i], rng)
     return generation
 
 # 1) Koristimo križanje poretka (OX1) zato što je bitan redosljed u kojem su brojevi, a ne 
 #    njihov apsolutni poredak u listi
-def crossoverOfSelectedPopulation(n: int, k: int, selected, rng):
-    def crossoverOfChromosomes(n: int, solA: tuple, solB: tuple):
+def crossoverOfSelectedPopulation(popSize: int, n: int, k: int, selected, rng):
+    def crossoverOfChromosomes(n: int, solA: tuple, solB: tuple, rng):
         def crossoverOX1(n:int, pos1: int, pos2: int, mainParentOrder, sideParentOrder):
-            childOrder = np.full(n, np.nan, int)
+            childOrder = np.empty_like(mainParentOrder)
             usedIdSet = set()
 
             for i in range(pos1, pos2):
@@ -76,7 +78,6 @@ def crossoverOfSelectedPopulation(n: int, k: int, selected, rng):
             for i in indices:
                 curPosInChildOrder = indices[cur]
                 if sideParentOrder[i] not in usedIdSet:
-                    # print(curPosInChildOrder, i)
                     childOrder[curPosInChildOrder] = sideParentOrder[i]
                     cur += 1
                     usedIdSet.add(sideParentOrder[i])
@@ -85,7 +86,7 @@ def crossoverOfSelectedPopulation(n: int, k: int, selected, rng):
             return childOrder
 
         #odabiru se dvije pozicije koje određuju segment u order listama
-        [pos1, pos2] = np.random.randint(0, n, 2)
+        [pos1, pos2] = rng.choice(n, 2, replace=False)
         if pos2 < pos1:
             tmp = pos1
             pos1 = pos2
@@ -103,39 +104,39 @@ def crossoverOfSelectedPopulation(n: int, k: int, selected, rng):
         childBord = crossoverOX1(n, pos1, pos2, orderB, orderA)
         return ((childAord, encA), (childBord, encB))
 
-    newGeneration = np.empty(n, dtype=object)
+    newGeneration = np.empty(popSize, dtype=object)
     cur = 0
-    while cur < n:
-        indices = rng.choice(k, n//2 + 1, replace=True)
+    while cur < popSize:
+        indices = rng.choice(k, popSize//2 + 1, replace=True)
         for i in range(k):
             solA = selected[indices[i]]
             solB = selected[indices[i + 1]]
-            solC, solD = crossoverOfChromosomes(n, solA, solB)
+            solC, solD = crossoverOfChromosomes(n, solA, solB, rng)
             newGeneration[cur] = solC
             cur += 1
-            if cur == n:
+            if cur == popSize:
                 return newGeneration
             newGeneration[cur] = solD
             cur += 1
-            if cur == n:
+            if cur == popSize:
                 return newGeneration
     return newGeneration
 
 # 1) k je veličina populacije za križanje
-def geneticAlgorithm(n: int, k: int, numOfIter: int, matrix):
-    generation = np.array([helper.getRandomStartingSolution(n) for _ in range(n)], dtype=object)
-    line = np.empty(n, dtype=object)
+def geneticAlgorithm(popSize: int, n: int, k: int, numOfIter: int, matrix):
+    generation = np.array([helper.getRandomStartingSolution(n) for _ in range(popSize)], dtype=object)
+    line = np.empty(popSize, dtype=object)
     selected = np.empty(k, dtype=object)
-    fitnes = np.empty(n, dtype=int)
+    fitnes = np.empty(popSize, dtype=int)
     rng = np.random.default_rng()
     bestFit = 0
     bestSol = None
 
     for __ in range(numOfIter):    
-        assert len(generation) == n
+        assert len(generation) == popSize
         fitSum = 0
 
-        for i in range(n):
+        for i in range(popSize):
             sol = generation[i]
             fit = helper.getFitnessOfSolution(sol, matrix)
             if fit > bestFit:
@@ -147,12 +148,12 @@ def geneticAlgorithm(n: int, k: int, numOfIter: int, matrix):
             generation[i] = sol
             fitnes[i] = fit
 
-        # selected = SUSSelection(generation, line, fitSum, n, k)
-        selected = topSelection(generation, fitnes, n, k)
-        generation = crossoverOfSelectedPopulation(n, k, selected, rng)
-        generation = mutateGeneration(n, generation, rng)        
-    for i in range(n):
-        assert len(generation) == n
+        selected = SUSSelection(generation, line, fitSum, popSize, k)
+        # selected = topSelection(generation, fitnes, k)
+        generation = crossoverOfSelectedPopulation(popSize, n, k, selected, rng)
+        generation = mutateGeneration(popSize, n, generation, rng)        
+    for i in range(popSize):
+        assert len(generation) == popSize
         sol = generation[i]
         fit = helper.getFitnessOfSolution(sol, matrix)
         if fit > bestFit:
