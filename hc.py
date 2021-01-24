@@ -1,21 +1,19 @@
 import numpy as np
-import hc
-import ga
 import helper
 
 
 # 1) Koliko treba biti susjedstvo?
 # 2) Susjedstvo mozemo mijenjati takoder da mijenjamo i granice mozda
 # 3) Mislim da je bolje kada mijenjamo i granice
-def getHCNeighbourhood(n: int, sol: tuple):
+def getHCNeighbourhood(numOfPairs: int, sol: tuple):
     order, enc = sol
     newOrder = order.copy()
     newEnc = enc.copy()
     neigh = []
-    swapPairs = np.random.randint(0, n, 2 * n)
-    changeWhat = np.random.randint(0, 2, n)
-    encToChange = np.random.randint(0, len(enc), 2 * n)
-    for i in range(n):
+    swapPairs = np.random.randint(0, numOfPairs, 2 * numOfPairs)
+    changeWhat = np.random.randint(0, 2, numOfPairs)
+    encToChange = np.random.randint(0, len(enc), 2 * numOfPairs)
+    for i in range(numOfPairs):
         if changeWhat[i] == 0 or encToChange[i] == encToChange[i + 1]:
             newOrder = helper.swap(newOrder, swapPairs[i], swapPairs[i + 1])
             newSol = (newOrder, enc)
@@ -29,16 +27,16 @@ def getHCNeighbourhood(n: int, sol: tuple):
     return neigh
 
 # 1) repeat parametar je koliko puta da se ponovi algoritam pa onda uzmemo najbolje rješenje
-def hillClimbing(n: int, repeat: int, matrix):
+def hillClimbing(numOfPairs: int, repeat: int, matrix):
     retSol = None
     retFit = 0
 
     for _ in range(repeat): #koliko puta zelimo poceti ispocetka s random pocetnim rjesenjem
-        bestSol = helper.getRandomStartingSolution(n)
+        bestSol = helper.getRandomStartingSolution(numOfPairs)
         bestFit = helper.getFitnessOfSolution(bestSol, matrix)
 
-        for _ in range(n*n): #koliko puta ponavljamo glavni dio hc
-            neigh = getHCNeighbourhood(n, bestSol)
+        for _ in range(numOfPairs*numOfPairs): #koliko puta ponavljamo glavni dio hc
+            neigh = getHCNeighbourhood(numOfPairs, bestSol)
 
             for j in range(len(neigh)):
                 curSol = neigh[j]

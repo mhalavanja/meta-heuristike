@@ -11,23 +11,23 @@ def getDrawnSolution(sol: tuple):
         cur += ntup
     return ret
 
-def getEnclousure(n: int):
+def getEnclousure(numOfPairs: int):
     enc = []
     sum = 0
-    while sum < n:
+    while sum < numOfPairs:
         [t] = np.random.randint(1, 4, 1)
         sum += t
-        if sum > n:
-            t = t - (sum - n)
+        if sum > numOfPairs:
+            t = t - (sum - numOfPairs)
             if t <= 0:
                 break
         enc.append(t)
     return enc
 
 # 1) Mislim da je ovo najfleksibilniji prikaz rješenja, zauzima duplo memorije, ali memorija nije probelm
-def getRandomStartingSolution(n: int):
-    order = np.random.permutation(n)
-    enc = getEnclousure(n)
+def getRandomStartingSolution(numOfPairs: int):
+    order = np.random.permutation(numOfPairs)
+    enc = getEnclousure(numOfPairs)
     return (order, enc)
 
 # 1) Za svaki ciklus gleda je li svi u ciklusu imaju transplataciju i onda je fit += len(ciklusa)

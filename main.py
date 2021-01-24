@@ -6,8 +6,8 @@ import helper
 # 1) Kako rijesiti problem lanaca vs ciklusa, tj. kako znati kada je jedno kada drugo
 # 2) Za sada rijesavam kao da nema lanaca
 
-def getMatrix(n: int):
-    matrix = np.random.rand(n, n)
+def getMatrix(numOfPairs: int):
+    matrix = np.random.rand(numOfPairs, numOfPairs)
     return matrix
 
 def loadMatrix(fileName: str):
@@ -16,7 +16,7 @@ def loadMatrix(fileName: str):
         lines = f.readlines()
         for line in lines:
             line = line[:-2]
-            arr = [int(n) for n in line.split(",")]
+            arr = [int(numOfPairs) for numOfPairs in line.split(",")]
             matrix.append(arr)
     return matrix
 
@@ -30,21 +30,23 @@ def get01Matrix(matrix: np.ndarray, cut: float):
 
 
 # Ovdje upisujemo parametre
-# n -> veličina matrice
+# numOfPairs -> veličina matrice
 # cut -> koliko dobra mora biti šansa za uspijeh transplatacije da bi je obavili
-n = 100
+numOfPairs = 100
 matrix = loadMatrix("Matrica_100")
-# matrix = getMatrix(n)
+# matrix = getMatrix(numOfPairs)
 # cut = 0.60
 matrix01 = get01Matrix(matrix, 0)
 
-# rsol, rfit = hc.hillClimbing(n, 1, matrix01)
+# rsol, rfit = hc.hillClimbing(numOfPairs, 1, matrix01)
 
-#TODO: ne znam koliko je najbolje da je k
-k = 50 #k-> veličina selektirane populacije za krizanje
+#TODO: ne znam koliko je najbolje da je selectionSize
+selectionSize = 50 #selectionSize-> veličina selektirane populacije za krizanje
 numOfIter = 500
 popSize = 100
+orderMutateProb = 0.1
+encMutateProb = 0.2
 
-sol, fit = ga.geneticAlgorithm(popSize, n, k, numOfIter, matrix01)
+sol, fit = ga.geneticAlgorithm(popSize, numOfPairs, selectionSize, encMutateProb, orderMutateProb, numOfIter, matrix01)
 print(fit)
 print(sol)
