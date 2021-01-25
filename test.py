@@ -7,7 +7,6 @@ def getTestMatrix(numOfPairs: int, fit: int):
     enc = helper.getEnclousure(numOfPairs)
     rng = np.random.default_rng()
     idList = rng.choice(numOfPairs, fit, replace=False)
-    # curFit = 0
     cur = 0
     for l in enc:
         for i in range(l):
@@ -21,13 +20,14 @@ def getTestMatrix(numOfPairs: int, fit: int):
         cur += l
     return (matrix, (idList, enc))
 
-numOfPairs = 10
-selectionSize = numOfPairs//2 #selectionSize-> veličina selektirane populacije za krizanje
+numOfPairs = 50
 optFit = numOfPairs
-numOfIter = 1000
-popSize = 500
-orderMutateProb = 0.1
-encMutateProb = 0.2
+
+popSize = 2000
+selectionSize = 300
+orderMutateProb = 0.01
+encMutateProb = 0.05
+numOfIter = 800
 
 # print(matrix01)
 matrix01, optimalSol = getTestMatrix(numOfPairs, optFit)

@@ -90,14 +90,36 @@ def swap(lista, i: int, j: int):
         lista[j] = temp
         return lista
 
-# 1) Jedan enc se smanji ako je veci od 1, a jedan se poveca ako je manji od 3
+# 1) Mijenjaju se po pravilu tako da omjer svih ostane isti nakon mutacije da se spriječi
+# konvergiranje prema jednom broju
+        # 1-1 -> 0-2
+        # 1-2 -> 0-3
+        # 1-3 -> 2-2
+        # 2-1 -> 1-2
+        # 2-2 -> 1-3
+        # 2-3 -> 1-3-1
+        # 3-1 -> 1-3
+        # 3-2 -> 2-3
+        # 3-3 -> 2-3-1
 def changeEnc(enc, i: int, j: int):
     a = enc[i]
     b = enc[j]
-    if a != 1 and b != 3:
+    
+    if a == 1 and b == 3:
+        enc[i] = 2
+        enc[j] = 2
+    elif a == 2 and b == 3:
+        enc[i] = 1
+        enc.append(1)
+    elif a == 3 and b == 1:
+        enc[i] = 1
+        enc[j] = 3
+    elif a == 3 and b == 3:
+        enc[i] = 2
+        enc.append(1)
+    else:
         enc[i] = a - 1
         enc[j] = b + 1
-    elif a != 3 and b != 1:
-        enc[i] = a + 1
-        enc[j] = b - 1
+    if enc[i] == 0:
+        del enc[i]
     return enc
