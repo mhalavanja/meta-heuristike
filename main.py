@@ -1,52 +1,46 @@
-import numpy as np
+import sys
 import hc
 import ga
 import helper
 
-# 1) Kako rijesiti problem lanaca vs ciklusa, tj. kako znati kada je jedno kada drugo
-# 2) Za sada rijesavam kao da nema lanaca
+args = sys.argv
 
-def getMatrix(numOfPairs: int):
-    matrix = np.random.rand(numOfPairs, numOfPairs)
-    return matrix
+fileName = args[1]
+json = args[2]
+alg = args[3]
+numOfIter = int(args[4])
+popSize = int(args[5])
+selectionSize = int(args[6])
+orderMutateProb = float(args[7])
+encMutateProb = float(args[8])
+selectionMode = args[9]
 
-def loadMatrix(fileName: str):
-    matrix = []
-    with open(fileName) as f:
-        lines = f.readlines()
-        for line in lines:
-            line = line[:-2]
-            arr = [int(numOfPairs) for numOfPairs in line.split(",")]
-            matrix.append(arr)
-    return matrix
+# fileName = "genjson-100.json"
+# json = "True"
+# alg = "ga"
+# numOfIter = 2000
+# popSize = 100
+# selectionSize = 50
+# orderMutateProb = 0.01
+# encMutateProb = 0.05
+# selectionMode = "top"
 
-def get01Matrix(matrix: np.ndarray, cut: float):
-    def cutFunction(x):
-        if x < cut:
-            return 0
-        else:
-            return 1
-    return np.vectorize(cutFunction)(matrix)
+transformDict = matrix = None
+if json == "True":
+    transformDict, matrix = helper.getJsonMatrix(fileName)
+else:
+    transformDict, matrix = helper.getMatrix(fileName)
 
+sol = fit = None
+if alg == "ga":
+    sol, fit = ga.geneticAlgorithm(popSize, len(matrix), selectionSize, encMutateProb, orderMutateProb, numOfIter, matrix, selectionMode)
+elif alg == "hc":
+    sol, fit = hc.hillClimbing(len(matrix), 5, matrix)
 
-# Ovdje upisujemo parametre
-# numOfPairs -> veličina matrice
-# cut -> koliko dobra mora biti šansa za uspijeh transplatacije da bi je obavili
-numOfPairs = 100
-matrix = loadMatrix("Matrica_100")
-# matrix = getMatrix(numOfPairs)
-# cut = 0.60
-matrix01 = get01Matrix(matrix, 0)
+drawnSol = helper.getFinalDrawnSolution(sol, matrix)
+for ntup in drawnSol:
+    for i in range(len(ntup)):
+        ntup[i] = transformDict[ntup[i]]
 
-# rsol, rfit = hc.hillClimbing(numOfPairs, 1, matrix01)
-
-#TODO: ne znam koliko je najbolje da je selectionSize
-selectionSize = 50 #selectionSize-> veličina selektirane populacije za krizanje
-numOfIter = 500
-popSize = 100
-orderMutateProb = 0.1
-encMutateProb = 0.2
-
-sol, fit = ga.geneticAlgorithm(popSize, numOfPairs, selectionSize, encMutateProb, orderMutateProb, numOfIter, matrix01)
-print(fit)
-print(sol)
+print("Dobiveni fit: ", fit)
+print("Dobiveno rješenje: ", drawnSol)

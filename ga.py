@@ -1,9 +1,6 @@
 import numpy as np
 import helper
 
-# 1) Ne znam jel se isplati napraviti HC kod odabira početne generacije za GA
-# 2) Treba odlučiti koja vrsta GA je bolja ili kako cemo tocno
-# Stochastic universal sampling
 def SUSSelection(generation, line, fitSum: int, popSize: int, selectionSize: int):
     selected = np.empty(selectionSize, dtype=object)
     if fitSum == 0:
@@ -30,19 +27,14 @@ def topSelection(generation, fitnes, selectionSize: int):
     generation = np.array(generation, tuple)[inds]
     return generation[:selectionSize]
 
-# 1) TODO: Mogli bi imati dvije mutacije, jedna mtuacija za order, druga za enc 
 def mutateGeneration(popSize: int, numOfPairs: int, encMutateProb: float, orderMutateProb: float, generation, rng):
     def mutateEnc(sol: tuple, rng):
         order, enc = sol
-        # newOrder = order.copy()
-        # newEnc = enc.copy()
         encToChange = rng.choice(len(enc), 2, replace=False)
         return(order, helper.changeEnc(enc, encToChange[0], encToChange[1]))
 
     def mutateOrder(numOfPairs: int, sol: tuple, rng):
         order, enc = sol
-        # newOrder = order.copy()
-        # newEnc = enc.copy()
         orderToChange = rng.choice(numOfPairs, 2, replace=False)
         return(helper.swap(order, orderToChange[0], orderToChange[1]), enc)
 
@@ -56,8 +48,8 @@ def mutateGeneration(popSize: int, numOfPairs: int, encMutateProb: float, orderM
             generation[i] = mutateOrder(numOfPairs, generation[i], rng)
     return generation
 
-# 1) Koristimo križanje poretka (OX1) zato što je bitan redosljed u kojem su brojevi, a ne 
-#    njihov apsolutni poredak u listi
+#Koristimo križanje poretka (OX1) zato što je bitan redosljed u kojem su brojevi, a ne 
+#njihov apsolutni poredak u listi
 def crossoverOfSelectedPopulation(popSize: int, numOfPairs: int, selectionSize: int, selected, rng):
     def crossoverOfChromosomes(numOfPairs: int, solA: tuple, solB: tuple, rng):
         def crossoverOX1(numOfPairs:int, pos1: int, pos2: int, mainParentOrder, sideParentOrder):
@@ -120,8 +112,7 @@ def crossoverOfSelectedPopulation(popSize: int, numOfPairs: int, selectionSize: 
                 return newGeneration
     return newGeneration
 
-# 1) selectionSize je veličina populacije za križanje
-def geneticAlgorithm(popSize: int, numOfPairs: int, selectionSize: int, encMutateProb: float, orderMutateProb: float,  numOfIter: int, matrix):
+def geneticAlgorithm(popSize: int, numOfPairs: int, selectionSize: int, encMutateProb: float, orderMutateProb: float,  numOfIter: int, matrix, selectionMode):
     generation = np.array([helper.getRandomStartingSolution(numOfPairs) for _ in range(popSize)], dtype=object)
     line = np.empty(popSize, dtype=object)
     selected = np.empty(selectionSize, dtype=object)
@@ -130,7 +121,7 @@ def geneticAlgorithm(popSize: int, numOfPairs: int, selectionSize: int, encMutat
     bestFit = 0
     bestSol = None
 
-    for __ in range(numOfIter):    
+    for _ in range(numOfIter):    
         assert len(generation) == popSize
         fitSum = 0
 
@@ -145,9 +136,11 @@ def geneticAlgorithm(popSize: int, numOfPairs: int, selectionSize: int, encMutat
             fitSum = newFitSum
             generation[i] = sol
             fitnes[i] = fit
-
-        selected = SUSSelection(generation, line, fitSum, popSize, selectionSize)
-        # selected = topSelection(generation, fitnes, selectionSize)
+        selected = None
+        if selectionMode == "sus":
+            selected = SUSSelection(generation, line, fitSum, popSize, selectionSize)
+        elif selectionMode == "top":
+            selected = topSelection(generation, fitnes, selectionSize)
         generation = crossoverOfSelectedPopulation(popSize, numOfPairs, selectionSize, selected, rng)
         generation = mutateGeneration(popSize, numOfPairs, encMutateProb, orderMutateProb, generation, rng)        
     for i in range(popSize):

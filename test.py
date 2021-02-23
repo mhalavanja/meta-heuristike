@@ -20,21 +20,4 @@ def getTestMatrix(numOfPairs: int, fit: int):
         cur += l
     return (matrix, (idList, enc))
 
-numOfPairs = 50
-optFit = numOfPairs
-
-popSize = 2000
-selectionSize = 300
-orderMutateProb = 0.01
-encMutateProb = 0.05
-numOfIter = 800
-
-# print(matrix01)
-matrix01, optimalSol = getTestMatrix(numOfPairs, optFit)
-print("Optimalni fit: ", optFit)
-print("Optimalno rješenje: ", helper.getFinalDrawnSolution(optimalSol, matrix01))
-print()
-
-sol, fit = ga.geneticAlgorithm(popSize, numOfPairs, selectionSize, encMutateProb, encMutateProb, numOfIter, matrix01)
-print("Dobiveni fit: ", fit)
-print("Dobiveno rješenje: ", helper.getFinalDrawnSolution(sol, matrix01))
+numOfPairs = 10
