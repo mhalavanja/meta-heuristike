@@ -1,42 +1,53 @@
 import numpy as np
+from numba import njit, jit
+import numba as nb
 import json
 
 # 1) Ova funkcija služi samo radi ljepšeg prikaza rješenja
 def getDrawnSolution(sol: tuple):
-    order, enc = sol
+    order, enc, encLen = sol
     ret = []
     cur = 0
-    for ntup in enc:
+    i = 0
+    for i in range(encLen):
+        ntup = enc[i]
         tup = [order[cur + i] for i in range(ntup)]
         ret.append(tup)
         cur += ntup
     return ret
 
+@jit
 def getEnclousure(numOfPairs: int):
-    enc = []
+    enc = np.empty(numOfPairs, dtype=np.short)
     sum = 0
+    i = 0
     while sum < numOfPairs:
-        [t] = np.random.randint(1, 4, 1)
+        to = min(4,numOfPairs-sum + 1)
+        [t] = np.random.randint(1, to , 1)
         sum += t
-        if sum > numOfPairs:
-            t = t - (sum - numOfPairs)
-            if t <= 0:
-                break
-        enc.append(t)
-    return enc
+        # if sum > numOfPairs:
+        #     t = t - (sum - numOfPairs)
+        #     if t <= 0:
+        #         break
+        enc[i] = t
+        i += 1
+    return enc, i
 
-# 1) Mislim da je ovo najfleksibilniji prikaz rješenja, zauzima duplo memorije, ali memorija nije probelm
-def getRandomStartingSolution(numOfPairs: int):
+@jit
+def getRandomStartingSolution(numOfPairs: int) -> tuple:
     order = np.random.permutation(numOfPairs)
-    enc = getEnclousure(numOfPairs)
-    return (order, enc)
+    enc, size = getEnclousure(numOfPairs)
+    return order, enc, size
 
 # 1) Za svaki ciklus gleda je li svi u ciklusu imaju transplataciju i onda je fit += len(ciklusa)
+@jit
 def getFitnessOfSolution(sol: tuple, matrix):
-    order, enc = sol
+    order, enc, encLen = sol
     fit = 0
     cur = 0
-    for l in enc:
+    # assert sum(enc[:encLen]) == len(enc)
+    for j in range(encLen):
+        l = enc[j]
         ntup = order[cur : cur + l]
         ntupWorks = True
         for i in range(l):
@@ -52,43 +63,68 @@ def getFitnessOfSolution(sol: tuple, matrix):
         if ntupWorks:
             fit += l
         cur += l
+    # assert sum(enc[:encLen]) == len(enc)
     return fit
 
 # 1) Vraća nacrtano rješenje koje sadrži samo ntuplove čije će se operacije dogoditi  
 def getFinalDrawnSolution(sol: tuple, matrix):
-    order, enc = sol
-    order = order.tolist()
-    cur = 0
-    j = 0
-    while j < len(enc):
-        l = enc[j] #prolazimo po enc listi
-        ntup = order[cur : cur + l]
-        i = 0
-        ntupWorks = True
-        while i < l: #prolazimo po dijelu order liste duljine l
-            a = ntup[i]
+    sol = getDrawnSolution(sol)
+    n = len(sol)
+    i = 0
+    while i < n:
+        ntup = sol[i]
+        m = len(ntup)
+        for j in range(m):
+            a = ntup[j]
             b = None
-            if i == l - 1:
+            if j == m - 1:
                 b = ntup[0]
             else:
-                b = ntup[i + 1]
-            if matrix[a][b] == 0: #ako trenutni ciklus (lanac) nije dobar, brišemo ga
-                del enc[j]  #brišemo iz enc liste element koji ne cini dobar ciklus (lanac)
-                for k in range(l): #brišemo iz order liste id-eve koji ne cien dobar ciklus (lanac)
-                    del order[cur]
-                ntupWorks = False
+                b = ntup[j + 1]
+            if matrix[a][b] == 0:  # ako trenutni ciklus nije dobar, brišemo ga
+                del sol[i]
+                i -= 1
+                n -= 1
                 break
-            i += 1
-        if ntupWorks:
-            cur += l
-            j += 1
-    return getDrawnSolution((order, enc))
+        i += 1
+    return sol
+# order, enc, encLen = sol
+#     enc = enc.tolist()
+#     order = order.tolist()
+#     cur = 0
+#     j = 0
+#     while j < encLen:
+#         l = enc[j] #prolazimo po enc listi
+#         ntup = order[cur : cur + l]
+#         i = 0
+#         ntupWorks = True
+#         while i < l: #prolazimo po dijelu order liste duljine l
+#             a = ntup[i]
+#             b = None
+#             if i == l - 1:
+#                 b = ntup[0]
+#             else:
+#                 b = ntup[i + 1]
+#             if matrix[a][b] == 0: #ako trenutni ciklus (lanac) nije dobar, brišemo ga
+#                 del enc[j]  #brišemo iz enc liste element koji ne cini dobar ciklus (lanac)
+#                 for k in range(l): #brišemo iz order liste id-eve koji ne cien dobar ciklus (lanac)
+#                     # print(cur)
+#                     # print(order)
+#                     del order[cur]
+#                 ntupWorks = False
+#                 break
+#             i += 1
+#         if ntupWorks:
+#             cur += l
+#             j += 1
+    return sol
 
+@jit((nb.int16[:], nb.int16, nb.int16))
 def swap(lista, i: int, j: int):
         temp = lista[i]
         lista[i] = lista[j]
         lista[j] = temp
-        return lista
+        return
 
 # 1) Mijenjaju se po pravilu tako da omjer svih ostane isti nakon mutacije da se spriječi
 # konvergiranje prema jednom broju
@@ -101,34 +137,44 @@ def swap(lista, i: int, j: int):
         # 3-1 -> 1-3
         # 3-2 -> 2-3
         # 3-3 -> 2-3-1
-def changeEnc(enc, i: int, j: int):
+@jit(nb.int16(nb.int16[:], nb.int16, nb.int16, nb.int16))
+def changeEnc(enc, encLen, i: int, j: int):
+    # assert sum(enc[:encLen]) == len(enc)
     a = enc[i]
     b = enc[j]
-    
+    # print(enc)
+    # print(encLen)
+    # print(a, b)
+    # assert 0 not in enc[:encLen]
     if a == 1 and b == 3:
         enc[i] = 2
         enc[j] = 2
     elif a == 2 and b == 3:
         enc[i] = 1
-        enc.append(1)
+        enc[encLen] = 1
+        encLen += 1
     elif a == 3 and b == 1:
         enc[i] = 1
         enc[j] = 3
     elif a == 3 and b == 3:
         enc[i] = 2
-        enc.append(1)
+        enc[encLen] = 1
+        encLen += 1
     else:
         enc[i] = a - 1
         enc[j] = b + 1
     if enc[i] == 0:
-        del enc[i]
-    return enc
+        for k in range(i, encLen):
+            enc[k] = enc[k + 1]
+        encLen -= 1
+    # assert sum(enc[:encLen]) == len(enc)
+    return encLen
 
 def getNumber(id, curNum, dict):
     if id not in dict:
         dict[id] = curNum
         curNum += 1
-    return (dict[id], curNum)
+    return dict[id], curNum
 
 def getJsonMatrix(fileName):
     matrixDim = 0
@@ -150,7 +196,8 @@ def getJsonMatrix(fileName):
             matrixDict[matrixKey].append(matrixRecipient)
 
     n = len(dict)
-    matrix = [[0 for _ in range(n)] for _ in range(n)]
+    # matrix = [[0 for _ in range(n)] for _ in range(n)]
+    matrix = np.zeros((n,n), dtype=np.short)
     for recipientId in matrixDict:
         for donorId in matrixDict[recipientId]:
             matrix[donorId][recipientId] = 1
@@ -188,4 +235,4 @@ def getMatrix(fileName: str):
         n = len(matrix)
 
     inverseDict = {v: k for k, v in transformDict.items()}
-    return inverseDict, matrix
+    return inverseDict, np.array(matrix, dtype=np.short)
