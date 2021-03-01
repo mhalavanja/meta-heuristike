@@ -1,5 +1,5 @@
 import numpy as np
-from numba import njit, jit
+from numba import njit
 import numba as nb
 import json
 
@@ -16,7 +16,7 @@ def getDrawnSolution(sol: tuple):
         cur += ntup
     return ret
 
-@jit
+@njit
 def getEnclousure(numOfPairs: int):
     enc = np.empty(numOfPairs, dtype=np.short)
     sum = 0
@@ -25,27 +25,22 @@ def getEnclousure(numOfPairs: int):
         to = min(4,numOfPairs-sum + 1)
         [t] = np.random.randint(1, to , 1)
         sum += t
-        # if sum > numOfPairs:
-        #     t = t - (sum - numOfPairs)
-        #     if t <= 0:
-        #         break
         enc[i] = t
         i += 1
     return enc, i
 
-@jit
+@njit
 def getRandomStartingSolution(numOfPairs: int) -> tuple:
     order = np.random.permutation(numOfPairs)
     enc, size = getEnclousure(numOfPairs)
     return order, enc, size
 
 # 1) Za svaki ciklus gleda je li svi u ciklusu imaju transplataciju i onda je fit += len(ciklusa)
-@jit
+@njit
 def getFitnessOfSolution(sol: tuple, matrix):
     order, enc, encLen = sol
     fit = 0
     cur = 0
-    # assert sum(enc[:encLen]) == len(enc)
     for j in range(encLen):
         l = enc[j]
         ntup = order[cur : cur + l]
@@ -63,7 +58,6 @@ def getFitnessOfSolution(sol: tuple, matrix):
         if ntupWorks:
             fit += l
         cur += l
-    # assert sum(enc[:encLen]) == len(enc)
     return fit
 
 # 1) Vraća nacrtano rješenje koje sadrži samo ntuplove čije će se operacije dogoditi  
@@ -88,38 +82,8 @@ def getFinalDrawnSolution(sol: tuple, matrix):
                 break
         i += 1
     return sol
-# order, enc, encLen = sol
-#     enc = enc.tolist()
-#     order = order.tolist()
-#     cur = 0
-#     j = 0
-#     while j < encLen:
-#         l = enc[j] #prolazimo po enc listi
-#         ntup = order[cur : cur + l]
-#         i = 0
-#         ntupWorks = True
-#         while i < l: #prolazimo po dijelu order liste duljine l
-#             a = ntup[i]
-#             b = None
-#             if i == l - 1:
-#                 b = ntup[0]
-#             else:
-#                 b = ntup[i + 1]
-#             if matrix[a][b] == 0: #ako trenutni ciklus (lanac) nije dobar, brišemo ga
-#                 del enc[j]  #brišemo iz enc liste element koji ne cini dobar ciklus (lanac)
-#                 for k in range(l): #brišemo iz order liste id-eve koji ne cien dobar ciklus (lanac)
-#                     # print(cur)
-#                     # print(order)
-#                     del order[cur]
-#                 ntupWorks = False
-#                 break
-#             i += 1
-#         if ntupWorks:
-#             cur += l
-#             j += 1
-    return sol
 
-@jit((nb.int16[:], nb.int16, nb.int16))
+@njit((nb.int16[:], nb.int16, nb.int16))
 def swap(lista, i: int, j: int):
         temp = lista[i]
         lista[i] = lista[j]
@@ -137,15 +101,10 @@ def swap(lista, i: int, j: int):
         # 3-1 -> 1-3
         # 3-2 -> 2-3
         # 3-3 -> 2-3-1
-@jit(nb.int16(nb.int16[:], nb.int16, nb.int16, nb.int16))
+@njit(nb.int16(nb.int16[:], nb.int16, nb.int16, nb.int16))
 def changeEnc(enc, encLen, i: int, j: int):
-    # assert sum(enc[:encLen]) == len(enc)
     a = enc[i]
     b = enc[j]
-    # print(enc)
-    # print(encLen)
-    # print(a, b)
-    # assert 0 not in enc[:encLen]
     if a == 1 and b == 3:
         enc[i] = 2
         enc[j] = 2
@@ -167,7 +126,6 @@ def changeEnc(enc, encLen, i: int, j: int):
         for k in range(i, encLen):
             enc[k] = enc[k + 1]
         encLen -= 1
-    # assert sum(enc[:encLen]) == len(enc)
     return encLen
 
 def getNumber(id, curNum, dict):
@@ -196,7 +154,6 @@ def getJsonMatrix(fileName):
             matrixDict[matrixKey].append(matrixRecipient)
 
     n = len(dict)
-    # matrix = [[0 for _ in range(n)] for _ in range(n)]
     matrix = np.zeros((n,n), dtype=np.short)
     for recipientId in matrixDict:
         for donorId in matrixDict[recipientId]:
@@ -232,7 +189,6 @@ def getMatrix(fileName: str):
         n = len(matrix)
         for j in range(n):
             del matrix[j][i]
-        n = len(matrix)
 
     inverseDict = {v: k for k, v in transformDict.items()}
     return inverseDict, np.array(matrix, dtype=np.short)
