@@ -3,7 +3,7 @@ from numba import njit
 import numba as nb
 import json
 
-# 1) Ova funkcija služi samo radi ljepšeg prikaza rješenja
+#funkcija služi samo radi ljepšeg prikaza rješenja
 def getDrawnSolution(sol: tuple):
     order, enc, encLen = sol
     ret = []
@@ -16,9 +16,10 @@ def getDrawnSolution(sol: tuple):
         cur += ntup
     return ret
 
+#vrati nasumičnu listu enclosure
 @njit
-def getEnclousure(numOfPairs: int):
-    enc = np.empty(numOfPairs, dtype=np.short)
+def getEnclosure(numOfPairs: int):
+    enc = np.empty(numOfPairs, dtype=np.int32)
     sum = 0
     i = 0
     while sum < numOfPairs:
@@ -29,38 +30,31 @@ def getEnclousure(numOfPairs: int):
         i += 1
     return enc, i
 
-@njit
-def getRandomStartingSolution(numOfPairs: int) -> tuple:
-    order = np.random.permutation(numOfPairs)
-    enc, size = getEnclousure(numOfPairs)
-    return order, enc, size
-
-# 1) Za svaki ciklus gleda je li svi u ciklusu imaju transplataciju i onda je fit += len(ciklusa)
+#za svaki ciklus gleda je li svi u ciklusu imaju transplataciju i onda je fit += len(ciklusa)
 @njit
 def getFitnessOfSolution(sol: tuple, matrix):
     order, enc, encLen = sol
     fit = 0
     cur = 0
-    for j in range(encLen):
-        l = enc[j]
-        ntup = order[cur : cur + l]
-        ntupWorks = True
+    for j in range(encLen): #prolazimo po duljini enclosure liste
+        l = enc[j]  #trenutni enc
+        ntup = order[cur : cur + l] #1,2 ili 3 ciklus za koji žeelimo odrediti je li uspješan ili ne
+        ntupWorks = True #pretpostavimo da je trenutni ciklus uspješan
         for i in range(l):
             a = ntup[i]
-            b = None
             if i == l - 1:
-                b = ntup[0]
+                b = ntup[0] #ako je a zadnji element u ciklusu, b je prvi
             else:
-                b = ntup[i + 1]
+                b = ntup[i + 1] #inače je b sljedeći element nakon a u ciklusu
             if matrix[a][b] == 0:
                 ntupWorks = False
                 break
         if ntupWorks:
             fit += l
-        cur += l
+        cur += l #preskačemo elemente koje smo provjerili u trenutnom ciklusu
     return fit
 
-# 1) Vraća nacrtano rješenje koje sadrži samo ntuplove čije će se operacije dogoditi  
+#vraća nacrtano rješenje koje sadrži samo ntuplove čije će se operacije dogoditi
 def getFinalDrawnSolution(sol: tuple, matrix):
     sol = getDrawnSolution(sol)
     n = len(sol)
@@ -70,7 +64,6 @@ def getFinalDrawnSolution(sol: tuple, matrix):
         m = len(ntup)
         for j in range(m):
             a = ntup[j]
-            b = None
             if j == m - 1:
                 b = ntup[0]
             else:
@@ -83,15 +76,14 @@ def getFinalDrawnSolution(sol: tuple, matrix):
         i += 1
     return sol
 
-@njit((nb.int16[:], nb.int16, nb.int16))
+@njit((nb.int32[:], nb.int32, nb.int32))
 def swap(lista, i: int, j: int):
         temp = lista[i]
         lista[i] = lista[j]
         lista[j] = temp
-        return
 
-# 1) Mijenjaju se po pravilu tako da omjer svih ostane isti nakon mutacije da se spriječi
-# konvergiranje prema jednom broju
+#mijenjaju se po pravilu tako da omjer svih ostane isti nakon mutacije da se spriječi
+# konvergiranje t.d. neki broj nestane
         # 1-1 -> 0-2
         # 1-2 -> 0-3
         # 1-3 -> 2-2
@@ -101,7 +93,7 @@ def swap(lista, i: int, j: int):
         # 3-1 -> 1-3
         # 3-2 -> 2-3
         # 3-3 -> 2-3-1
-@njit(nb.int16(nb.int16[:], nb.int16, nb.int16, nb.int16))
+@njit(nb.int32(nb.int32[:], nb.int32, nb.int32, nb.int32))
 def changeEnc(enc, encLen, i: int, j: int):
     a = enc[i]
     b = enc[j]
@@ -122,23 +114,26 @@ def changeEnc(enc, encLen, i: int, j: int):
     else:
         enc[i] = a - 1
         enc[j] = b + 1
-    if enc[i] == 0:
+    if enc[i] == 0: #mičemo elemente koji su jednaki 0 iz enclosure liste i pomičemo sve iza njega unaprijed
         for k in range(i, encLen):
             enc[k] = enc[k + 1]
         encLen -= 1
     return encLen
 
+#funkcija za mapiranje id-eva kod parsiranja
 def getNumber(id, curNum, dict):
     if id not in dict:
         dict[id] = curNum
         curNum += 1
     return dict[id], curNum
 
+#funkcija za parsiranje json datoteke
 def getJsonMatrix(fileName):
     matrixDim = 0
     dict = {}
     curNum = 0
-    matrixDict = {}
+    matrixDict = {} #id-evi u json datoteci nisu brojevi koji idu redom pa ih moramo znati mapirati
+
     with open(fileName) as f:
         data = json.loads(f.read())["data"]
     for key in data:
@@ -146,24 +141,30 @@ def getJsonMatrix(fileName):
             matrixDim = int(key)
         matrixKey, curNum = getNumber(int(key), curNum, dict)
         matrixDict[matrixKey] = []
+
+
+        if "matches" not in data[key].keys(): #ako dani pacijent nema nijednog mogućeg donora
+            continue
+        #struktura json datoteke je takva da za danog pacijenta su pobrojani njegovi potencijalni donori
         for match in data[key]["matches"]:
             recipientId = match["recipient"]
             if recipientId > matrixDim:
                 matrixDim = recipientId
-            matrixRecipient, curNum = getNumber(recipientId, curNum, dict)
+            matrixRecipient, curNum = getNumber(recipientId, curNum, dict) #proces mapiranja id-eva
             matrixDict[matrixKey].append(matrixRecipient)
 
     n = len(dict)
-    matrix = np.zeros((n,n), dtype=np.short)
+    matrix = np.zeros((n,n), dtype=np.int32)
     for recipientId in matrixDict:
         for donorId in matrixDict[recipientId]:
             matrix[donorId][recipientId] = 1
-    inverseDict = {v: k for k, v in dict.items()}
+    inverseDict = {v: k for k, v in dict.items()} #obrnuti rječnik za mapiranje id-eva kada nakon algoritma
     return inverseDict, matrix
 
+#funkcija za parsiranje nejson datoteke
 def getMatrix(fileName: str):
     matrix = []
-    toDel = []
+    toDel = [] #retke koji imaju samo nule za elemente možemo obrisati, kao i pripadne stupce
     
     with open(fileName) as f:
         lines = f.readlines()
@@ -173,14 +174,16 @@ def getMatrix(fileName: str):
             arr = [int(numOfPairs) for numOfPairs in line.split(",")]
             matrix.append(arr)
             if all(v == 0 for v in arr):
-                toDel.append(i)
+                toDel.append(i) #sve nule, označavamo ga za brisanje
             i += 1
+
     n = len(matrix)
     transformDict = {}
     transformList = filter(lambda x: x not in toDel, list(range(n)))
     for i in transformList:
         transformDict[i] = i
-        
+
+    #kada obrišemo retke i stupce koji su samo nule, moramo znati mapirati preostale id-eve u početne
     for i in reversed(toDel):
         del matrix[i]
         for k,v in transformDict.items():
@@ -191,4 +194,4 @@ def getMatrix(fileName: str):
             del matrix[j][i]
 
     inverseDict = {v: k for k, v in transformDict.items()}
-    return inverseDict, np.array(matrix, dtype=np.short)
+    return inverseDict, np.array(matrix, dtype=np.int32)

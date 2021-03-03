@@ -19,15 +19,17 @@ selectionMode = args[9]
 
 # fileName = "genjson-100.json"
 # json = "True"
-# alg = "ga"
-# numOfIter = 4000
+# alg = "hc"
+# numOfIter = 10
 # popSize = 4000
 # selectionSize = 1000
 # orderMutateProb = 0.01
 # encMutateProb = 0.05
 # selectionMode = "top"
 
+#rječnik koji služi za ispravno vraćanje id-eva u slučaju da izbacimo redak i stupac koji imaju samo nule
 transformDict = matrix = None
+#različito parsiranje ovisno o ulaznim podacima
 if json == "True":
     transformDict, matrix = helper.getJsonMatrix(fileName)
 else:
@@ -36,7 +38,7 @@ else:
 fit = None
 sol = [0,0,0]
 numOfPairs = len(matrix)
-matrix = np.array(matrix, dtype=np.short)
+matrix = np.array(matrix, dtype=np.int32)
 
 start = timer()
 if alg == "ga":
@@ -46,6 +48,10 @@ elif alg == "hc":
     sol[0], sol[1], sol[2], fit = hc.hillClimbing(numOfPairs, numOfIter, matrix)
 end = timer()
 print("Vrijeme izvršavanja algoritma: ", end - start, " sekundi.")
+
+if sol == None:
+    print("Ne postoji niti jedna moguća transplatacija.")
+
 drawnSol = helper.getFinalDrawnSolution(sol, matrix)
 for ntup in drawnSol:
     for i in range(len(ntup)):

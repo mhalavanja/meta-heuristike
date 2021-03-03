@@ -4,7 +4,7 @@ import ga
 
 def getTestMatrix(numOfPairs: int, fit: int):
     matrix = np.full((numOfPairs,numOfPairs), 0)
-    enc = helper.getEnclousure(numOfPairs)
+    enc = helper.getEnclosure(numOfPairs)
     rng = np.random.default_rng()
     idList = rng.choice(numOfPairs, fit, replace=False)
     cur = 0
