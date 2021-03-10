@@ -143,9 +143,9 @@ def getJsonMatrix(fileName):
         matrixDict[matrixKey] = []
 
 
-        if "matches" not in data[key].keys(): #ako dani pacijent nema nijednog mogućeg donora
+        if "matches" not in data[key].keys(): #ako dani donor nema nijednog mogućeg primatelja
             continue
-        #struktura json datoteke je takva da za danog pacijenta su pobrojani njegovi potencijalni donori
+        #struktura json datoteke je takva da za danog donora su pobrojani njegovi potencijalni primatelji
         for match in data[key]["matches"]:
             recipientId = match["recipient"]
             if recipientId > matrixDim:
@@ -157,7 +157,7 @@ def getJsonMatrix(fileName):
     matrix = np.zeros((n,n), dtype=np.int32)
     for recipientId in matrixDict:
         for donorId in matrixDict[recipientId]:
-            matrix[donorId][recipientId] = 1
+            matrix[recipientId][donorId] = 1
     inverseDict = {v: k for k, v in dict.items()} #obrnuti rječnik za mapiranje id-eva kada nakon algoritma
     return inverseDict, matrix
 
